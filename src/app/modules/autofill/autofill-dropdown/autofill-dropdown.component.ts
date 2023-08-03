@@ -1,6 +1,6 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {FormControl} from "@angular/forms";
-import {map, Observable, startWith, Subject} from "rxjs";
+import {BehaviorSubject, map, Observable, startWith, Subject} from "rxjs";
 import {MatAutocompleteSelectedEvent, MatAutocompleteTrigger} from "@angular/material/autocomplete";
 
 @Component({
@@ -31,7 +31,7 @@ export class AutofillDropdownComponent implements OnInit {
 
   filteredOptions!: Observable<string[]>;
   enteredValue: string = '';
-
+  text = '';
 
   ngOnInit() {
     this.filteredOptions = this.formula.valueChanges.pipe(
@@ -39,7 +39,7 @@ export class AutofillDropdownComponent implements OnInit {
       map(value => {
         const inputParts = value.split(' ');
         const lastInputPart = inputParts[inputParts.length - 1];
-        return this._filter(lastInputPart)
+        return this._filter(lastInputPart);
       }),
     );
   }
@@ -47,10 +47,10 @@ export class AutofillDropdownComponent implements OnInit {
   private _filter(value: string): string[] {
     if (value.includes('(') && value.includes(')')) {
       value = value.substring(value.lastIndexOf('(') + 1, value.indexOf(')')).toLowerCase();
-      return [...this.mathConstants, ...this.functions].filter(option => option.toLowerCase().startsWith(value))
+      return [...this.mathConstants, ...this.functions].filter(option => option.toLowerCase().startsWith(value));
     }
     if (value.includes(')')) {
-      value = ''
+      value = '';
       return this.options.filter(option => option.toLowerCase());
     }
 
@@ -73,7 +73,7 @@ export class AutofillDropdownComponent implements OnInit {
     if (event.key === '(') {
       inputEl.value += `()`;
       inputEl.setSelectionRange(start + 1, end + 1);
-      this.enteredValue = inputEl.value
+      this.enteredValue = inputEl.value;
       event.preventDefault();
     }
 
@@ -83,9 +83,10 @@ export class AutofillDropdownComponent implements OnInit {
   displayFn(value: string) {
 
     if (!value)
-      value = ''
+      value = '';
 
     const input = document.getElementById('formulaInput') as HTMLInputElement;
+
 
     if (!input.value) {
       input.value = value;
@@ -103,20 +104,28 @@ export class AutofillDropdownComponent implements OnInit {
     const pos = this.enteredValue.slice(0, selectionStart as number) + value;
     this.enteredValue = this.enteredValue.slice(0, selectionStart as number) + value + this.enteredValue.slice(selectionEnd as number);
 
-/*    input.value = this.enteredValue;*/
+    input.value = this.enteredValue;
 
-    console.log(this.enteredValue)
-
-    input.setSelectionRange(pos.length, pos.length)
+    input.setSelectionRange(pos.length, pos.length);
 
     return this.enteredValue;
   };
+
+
 
   onInput(event: Event) {
 
     const inputEl = event.target as HTMLInputElement;
     if (!inputEl.value)
       inputEl.value = '';
+    this.text = inputEl.value;
+    console.log('input' + this.text);
+  }
+
+  onOptionSelected($event: MatAutocompleteSelectedEvent) {
+    const input = document.getElementById('formulaInput') as HTMLInputElement;
+    this.text = input.value;
+    console.log('option'+ this.text);
   }
 }
 

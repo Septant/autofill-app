@@ -22,7 +22,7 @@
            (input)="onInput($event)"
            [(ngModel)]="enteredValue"
     >
-    <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" > <!--(optionSelected)="onOptionSelected($event)"-->
+    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)" [displayWith]="displayFn" > <!--(optionSelected)="onOptionSelected($event)"-->
       <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
         {{option}}
       </mat-option>
@@ -32,6 +32,6 @@
 
 
 <p>
-  {{enteredValue}}
+  {{text}}
 </p>
 
