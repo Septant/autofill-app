@@ -11,17 +11,20 @@ import {MatInputModule} from "@angular/material/input";
 
 
 @NgModule({
-  declarations: [
-    AutofillDropdownComponent,
+    declarations: [
+        AutofillDropdownComponent,
 
-  ],
-  imports: [
-    CommonModule,
-    AutofillRoutingModule,
-    MatFormFieldModule,
-    MatAutocompleteModule,
-    ReactiveFormsModule,
-    MatInputModule
-  ]
+    ],
+    exports: [
+        AutofillDropdownComponent
+    ],
+    imports: [
+        CommonModule,
+        AutofillRoutingModule,
+        MatFormFieldModule,
+        MatAutocompleteModule,
+        ReactiveFormsModule,
+        MatInputModule
+    ]
 })
 export class AutofillModule { }

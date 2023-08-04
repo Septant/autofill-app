@@ -1,7 +1,8 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {FormControl} from "@angular/forms";
-import {BehaviorSubject, map, Observable, startWith, Subject} from "rxjs";
-import {MatAutocompleteSelectedEvent, MatAutocompleteTrigger} from "@angular/material/autocomplete";
+import {map, Observable, startWith} from "rxjs";
+import {MatAutocompleteSelectedEvent} from "@angular/material/autocomplete";
+import {AutofillService} from "../autofill.service";
 
 @Component({
   selector: 'app-autofill-dropdown',
@@ -10,7 +11,7 @@ import {MatAutocompleteSelectedEvent, MatAutocompleteTrigger} from "@angular/mat
 })
 export class AutofillDropdownComponent implements OnInit {
 
-  @ViewChild(MatAutocompleteTrigger) autocomplete!: MatAutocompleteTrigger;
+
 
   formula = new FormControl();
 
@@ -30,102 +31,143 @@ export class AutofillDropdownComponent implements OnInit {
   options: string[] = [...this.mathOps, ...this.mathConstants, ...this.boolOps, ...this.functions];
 
   filteredOptions!: Observable<string[]>;
-  enteredValue: string = '';
-  text = '';
+  text = '';  // добавить @Input() в случае необходимости извлечения ввода
+
+  constructor(private autofillService: AutofillService) {
+  }
 
   ngOnInit() {
+
+    //  считывание ввода, поиск подходящих опций
     this.filteredOptions = this.formula.valueChanges.pipe(
       startWith(''),
       map(value => {
-        const inputParts = value.split(' ');
-        const lastInputPart = inputParts[inputParts.length - 1];
-        return this._filter(lastInputPart);
+
+        const inputEl = document.getElementById('formulaInput') as HTMLInputElement;
+
+        const cursor = inputEl.selectionStart as number;
+
+        const valueToFilter = this.autofillService.inputCut(value, cursor, this.options);   //  обрезание шелухи - символов, не входящих во ввод текущей опции
+
+        return this._filter(valueToFilter);
       }),
     );
   }
 
+  // выбор множества значений подходящих к фильтру
   private _filter(value: string): string[] {
+
+    //  фильтр при курсоре в скобках
     if (value.includes('(') && value.includes(')')) {
       value = value.substring(value.lastIndexOf('(') + 1, value.indexOf(')')).toLowerCase();
-      return [...this.mathConstants, ...this.functions].filter(option => option.toLowerCase().startsWith(value));
+      return [...this.mathConstants, ...this.functions].filter(option => option.toLowerCase().includes(value));
     }
+
+    // фильтр для пустой строки идущей после закрывающей скобки
     if (value.includes(')')) {
       value = '';
       return this.options.filter(option => option.toLowerCase());
     }
 
-
+    // фильтр для операндов
     for (const str of [...this.mathOps, ...this.boolOps])
-      if (str === value)
+      if (str === value) {
         return [...this.mathConstants, ...this.functions].filter(option => option.toLowerCase());
+      }
 
     const inputValue = value.toLowerCase();
-    return this.options.filter(option => option.toLowerCase().startsWith(inputValue));
+
+    // остальное
+    return this.options.filter(option => option.toLowerCase().includes(inputValue));
+
   }
+
 
   onKeyDown(event: KeyboardEvent): void {
 
     const inputEl = event.target as HTMLInputElement;
 
     const start = inputEl.selectionStart as number;
-    const end = inputEl.selectionEnd as number;
 
-    if (event.key === '(') {
-      inputEl.value += `()`;
-      inputEl.setSelectionRange(start + 1, end + 1);
-      this.enteredValue = inputEl.value;
-      event.preventDefault();
-    }
+    this.autofillService.addBrackets(event, inputEl, start);  // парные скобки ()
 
-    this.autocomplete.openPanel();
   }
 
+  // вставка выбранной опции в имеющуюся строку
   displayFn(value: string) {
 
-    if (!value)
-      value = '';
-
+    const mathStr: string[] = ['+', '-', '*', '/', 'e', 'PI', 'TRUE', 'FALSE', 'NULL', '=', '!=', '<>', '<', '<=', '>', '>=', '&&', '||'];
     const input = document.getElementById('formulaInput') as HTMLInputElement;
 
+
+    //  zero-case
+    if (!value)
+      value = '';
 
     if (!input.value) {
       input.value = value;
       if (value.includes('()'))
         input.setSelectionRange(value.length - 1, value.length - 1);
-      this.enteredValue = value;
-      return value;
+      return input.value;
     }
 
-    this.enteredValue = input.value;
 
-    const selectionStart = input.selectionStart;
-    const selectionEnd = input.selectionEnd;
+    const start = input.selectionStart as number;
 
-    const pos = this.enteredValue.slice(0, selectionStart as number) + value;
-    this.enteredValue = this.enteredValue.slice(0, selectionStart as number) + value + this.enteredValue.slice(selectionEnd as number);
+    const beforeValue = input.value.slice(0, start);
+    const afterValue = input.value.slice(start)
 
-    input.value = this.enteredValue;
+    const spaceIdx = beforeValue.lastIndexOf(' ');
+    const bracketIdx = beforeValue.lastIndexOf('(');
 
-    input.setSelectionRange(pos.length, pos.length);
+    //  вставка по пробелу
+    if (spaceIdx > bracketIdx) {
 
-    return this.enteredValue;
+      input.value = beforeValue.slice(0, spaceIdx) + ' ' + value + afterValue
+
+      if (mathStr.includes(value))
+        input.setSelectionRange((beforeValue.slice(0, spaceIdx) + value).length + 1, (beforeValue.slice(0, spaceIdx) + value).length + 1);
+      else
+        input.setSelectionRange((beforeValue.slice(0, spaceIdx) + value).length, (beforeValue.slice(0, spaceIdx) + value).length);
+
+    }
+    //  вставка по открывающей скобке
+    else if (bracketIdx > spaceIdx) {
+
+      input.value = beforeValue.slice(0, bracketIdx + 1) + value + afterValue;
+
+      if (mathStr.includes(value))
+        input.setSelectionRange((beforeValue.slice(0, bracketIdx) + value).length + 1, (beforeValue.slice(0, bracketIdx) + value).length + 1);
+      else
+        input.setSelectionRange((beforeValue.slice(0, bracketIdx) + value).length, (beforeValue.slice(0, bracketIdx) + value).length);
+
+    }
+    // остальные вставки
+    else {
+
+      input.value = value
+      if (value.includes('()'))
+        input.setSelectionRange(input.value.length - 1, input.value.length - 1);
+      else
+        input.setSelectionRange(input.value.length, input.value.length);
+
+    }
+
+    return input.value;
   };
 
-
-
+  // запись строки при стандартном вводе
   onInput(event: Event) {
-
     const inputEl = event.target as HTMLInputElement;
     if (!inputEl.value)
       inputEl.value = '';
     this.text = inputEl.value;
-    console.log('input' + this.text);
   }
 
+  // запись строки по выбору опции
   onOptionSelected($event: MatAutocompleteSelectedEvent) {
     const input = document.getElementById('formulaInput') as HTMLInputElement;
     this.text = input.value;
-    console.log('option'+ this.text);
   }
 }
 

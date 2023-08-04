@@ -1,22 +1,26 @@
 :host {
+  width: 50%;
+
   .container {
-    border: 1px solid silver;
-    margin-top: 200px;
-    width: 300px;
-    height: 70px;
-    padding: 5%;
-  }
-
-  form {
-
-    border: 1px solid red;
-    width: 100%;
-    height: 100%;
-    top: 100px;
     display: flex;
-    flex-direction: row;
-
+    flex-direction: column;
     justify-content: center;
     align-content: center;
+    margin-top: 200px;
+    width: 100%;
+    .formula-output {
+      margin-bottom: 10px;
+      font-size: 16px;
+      p {
+        word-wrap: break-word;
+        height: 1.5rem;
+      }
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
   }
+
+
 }

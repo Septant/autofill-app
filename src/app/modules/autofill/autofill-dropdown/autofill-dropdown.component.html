@@ -1,18 +1,8 @@
 <div class="container">
-  <!--  <form>
-      <mat-form-field>
-        <mat-label>Формула</mat-label>
-        <input matInput type="text" [formControl]="formulaControl" (keydown)="onKeyDown($event)" (input)="onInput($event)">
-        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="optionSelected()">
-          <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
-            {{ option }}
-          </mat-option>
-        </mat-autocomplete>
-      </mat-form-field>
 
-    </form>-->
   <mat-form-field class="example-full-width" appearance="fill">
-    <mat-label>Formula</mat-label>
+    <mat-label>Введите форму</mat-label>
+
     <input type="text"
            id="formulaInput"
            matInput
@@ -20,18 +10,26 @@
            [matAutocomplete]="auto"
            (keydown)="onKeyDown($event)"
            (input)="onInput($event)"
-           [(ngModel)]="enteredValue"
+           placeholder="Введите выражение"
+           [matAutocompletePosition]="'auto'"
     >
-    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)" [displayWith]="displayFn" > <!--(optionSelected)="onOptionSelected($event)"-->
+
+    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)" [displayWith]="displayFn">
       <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
         {{option}}
       </mat-option>
     </mat-autocomplete>
+
   </mat-form-field>
+
+  <span>Формула:</span>
+  <div class="formula-output">
+    <p>
+      {{text}}
+    </p>
+  </div>
+
 </div>
 
 
-<p>
-  {{text}}
-</p>
 
