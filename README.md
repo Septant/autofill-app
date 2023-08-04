@@ -18,3 +18,6 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 Строка с автозаполнением для формул. За основу взят [angular material Autocomplete](https://v13.material.angular.io/components/autocomplete/overview). 
 
 Принцип работы: по нажатию на строку ввода открывается список доступных опций. Компонент реагирует на ввод и предлагает варианты вставки на основе полученной строки. Если выбирается функция funcname(), курсор ввода переводится внутри скобок (), в остальных случаях в точку следующую за элементов. Переменные и операнды необходимо разделять пробелом для корректной работы и лучшей читаемости введённого выражения.
+
+Пример работы приложения:
+![image](https://github.com/Septant/autofill-app/blob/master/formula-autofill.gif)
