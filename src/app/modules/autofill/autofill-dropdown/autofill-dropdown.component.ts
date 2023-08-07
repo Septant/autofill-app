@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {FormControl} from "@angular/forms";
 import {map, Observable, startWith} from "rxjs";
 import {MatAutocompleteSelectedEvent} from "@angular/material/autocomplete";
@@ -7,10 +7,10 @@ import {AutofillService} from "../autofill.service";
 @Component({
   selector: 'app-autofill-dropdown',
   templateUrl: './autofill-dropdown.component.html',
-  styleUrls: ['./autofill-dropdown.component.scss']
+  styleUrls: ['./autofill-dropdown.component.scss'],
+  providers: [AutofillService]
 })
 export class AutofillDropdownComponent implements OnInit {
-
 
 
   formula = new FormControl();
@@ -34,6 +34,7 @@ export class AutofillDropdownComponent implements OnInit {
   text = '';  // добавить @Input() в случае необходимости извлечения ввода
 
   constructor(private autofillService: AutofillService) {
+
   }
 
   ngOnInit() {
@@ -87,18 +88,16 @@ export class AutofillDropdownComponent implements OnInit {
 
     const inputEl = event.target as HTMLInputElement;
 
-    const start = inputEl.selectionStart as number;
+    const position = inputEl.selectionStart as number;
 
-    this.autofillService.addBrackets(event, inputEl, start);  // парные скобки ()
+    this.autofillService.addBrackets(event, inputEl, position);  // парные скобки ()
 
   }
 
   // вставка выбранной опции в имеющуюся строку
-  displayFn(value: string) {
+  displayFn = (value: any): string => {
 
-    const mathStr: string[] = ['+', '-', '*', '/', 'e', 'PI', 'TRUE', 'FALSE', 'NULL', '=', '!=', '<>', '<', '<=', '>', '>=', '&&', '||'];
     const input = document.getElementById('formulaInput') as HTMLInputElement;
-
 
     //  zero-case
     if (!value)
@@ -118,40 +117,32 @@ export class AutofillDropdownComponent implements OnInit {
     const afterValue = input.value.slice(start)
 
     const spaceIdx = beforeValue.lastIndexOf(' ');
-    const bracketIdx = beforeValue.lastIndexOf('(');
+    let bracketIdx = beforeValue.lastIndexOf('(');
 
     //  вставка по пробелу
     if (spaceIdx > bracketIdx) {
 
-      input.value = beforeValue.slice(0, spaceIdx) + ' ' + value + afterValue
-
-      if (mathStr.includes(value))
-        input.setSelectionRange((beforeValue.slice(0, spaceIdx) + value).length + 1, (beforeValue.slice(0, spaceIdx) + value).length + 1);
-      else
-        input.setSelectionRange((beforeValue.slice(0, spaceIdx) + value).length, (beforeValue.slice(0, spaceIdx) + value).length);
-
+      value = ' ' + value;
+      this.autofillService.insertValue(input, spaceIdx, beforeValue, value, afterValue);
     }
+
     //  вставка по открывающей скобке
     else if (bracketIdx > spaceIdx) {
-
-      input.value = beforeValue.slice(0, bracketIdx + 1) + value + afterValue;
-
-      if (mathStr.includes(value))
-        input.setSelectionRange((beforeValue.slice(0, bracketIdx) + value).length + 1, (beforeValue.slice(0, bracketIdx) + value).length + 1);
-      else
-        input.setSelectionRange((beforeValue.slice(0, bracketIdx) + value).length, (beforeValue.slice(0, bracketIdx) + value).length);
-
+      bracketIdx += 1;
+      this.autofillService.insertValue(input, bracketIdx, beforeValue, value, afterValue);
     }
+
     // остальные вставки
     else {
-
-      input.value = value
+      input.value = value;
       if (value.includes('()'))
         input.setSelectionRange(input.value.length - 1, input.value.length - 1);
       else
         input.setSelectionRange(input.value.length, input.value.length);
-
     }
+
+    // обновление вывода
+    this.text = input.value;
 
     return input.value;
   };
@@ -164,10 +155,8 @@ export class AutofillDropdownComponent implements OnInit {
     this.text = inputEl.value;
   }
 
-  // запись строки по выбору опции
-  onOptionSelected($event: MatAutocompleteSelectedEvent) {
-    const input = document.getElementById('formulaInput') as HTMLInputElement;
-    this.text = input.value;
-  }
 }
+
+
+
 

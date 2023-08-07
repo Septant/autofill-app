@@ -5,6 +5,7 @@ import {Injectable} from '@angular/core';
 })
 export class AutofillService {
 
+  opsNConstants = ['+', '-', '*', '/', 'e', 'PI', 'TRUE', 'FALSE', 'NULL', '=', '!=', '<>', '<', '<=', '>', '>=', '&&', '||'];
 
   constructor() {
   }
@@ -36,6 +37,21 @@ export class AutofillService {
       optionTarget = '';
     }
 
-    return optionTarget
+    return optionTarget;
+  }
+
+  insertValue(input: HTMLInputElement, dividerIdx: number, before: string, value: any, after: string) {
+    input.value = before.slice(0, dividerIdx) + value + after;
+    value = value.trim();
+
+    const position = (before.slice(0, dividerIdx) + value).length;
+    if (this.opsNConstants.includes(value)) {
+      input.setSelectionRange(position + 1, position + 1);
+    }
+
+    else{
+      input.setSelectionRange(position, position);
+    }
+
   }
 }
